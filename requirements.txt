@@ -10,4 +10,5 @@ statsmodels==0.13.2
 streamlit==1.8.1
 streamlit_option_menu==0.3.2
 tensorflow==2.7.0
+xlrd==1.2.0
 pystan==2.19.1.1
