@@ -1,4 +1,5 @@
 import math
+from matplotlib.figure import Figure
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -25,7 +26,7 @@ class ForecastingAlgorithmsClass:
 
         x_train = []
         y_train = []
-        step = 100
+        step = 30
 
         for i in range(step, len(train_data)):
             x_train.append(train_data[i-step:i, 0])
@@ -39,7 +40,7 @@ class ForecastingAlgorithmsClass:
         model.add(LSTM(50, return_sequences=False))
         model.add(Dense(25))
         model.add(Dense(1))
-        model.compile(optimizer='adam', loss='mean_squared_error')
+        model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
         history = model.fit(x_train, y_train, batch_size=128, epochs=1)
 
         test_data = scaled_data[training_data_len - step : , :]
@@ -56,8 +57,6 @@ class ForecastingAlgorithmsClass:
         predictions = scaler.inverse_transform(predictions)
 
         rms = np.sqrt(np.mean((predictions - y_test))**2)
-        st.write(rms)
-
         train = data[:training_data_len]
         valid = data[training_data_len:]
         valid['Predictions'] = predictions
@@ -68,6 +67,7 @@ class ForecastingAlgorithmsClass:
         fig2.add_trace(go.Line(x=valid.index, y=valid['Predictions'], name="predictions"))
         fig2.layout.update(xaxis_title="Date", yaxis_title=forecast_parameter+" values",title_text=forecast_parameter, xaxis_rangeslider_visible=False, width=800, height=500)
         st.plotly_chart(fig2)
+        
         
 
     def arima_forecast(st, data, forecasted_param):
@@ -97,7 +97,7 @@ class ForecastingAlgorithmsClass:
     def prophet_forecast(st, data, forecast_column_name):
         df_train = data[['Date', forecast_column_name]]     
         df_train = df_train.rename(columns={"Date": "ds", forecast_column_name: "y"})
-        period = 365
+        period = 100
         
         m = Prophet(changepoint_range=0.95)
         m.fit(df_train)
