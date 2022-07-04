@@ -25,7 +25,7 @@ class PreprocessingClass:
     def change_dataset_index(df):
         df.index = df['Date']
         df = df.resample('D').mean()
-
+        # df = df.set_index('Date').resample('M').mean().reset_index()
 
     def replace_nullvalues_with_mean(df):
         pass
@@ -38,6 +38,16 @@ class PreprocessingClass:
 
     def convert_xlsx2csv(NEW_DATA_PATH, df_name, df):
         df.to_csv(NEW_DATA_PATH + '/' + df_name + '.csv', index=False)
+
+
+
+    def convert_xlsx_to_csv():
+        DATA_PATH = '/home/tahir/Documents/DataScience/KocaeliAirQuality/Dataset/'
+        station_names = []
+        for file in os.listdir(DATA_PATH):
+            station_names.append(file)
+
+         
 
     
 

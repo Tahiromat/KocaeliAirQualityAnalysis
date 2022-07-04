@@ -43,24 +43,31 @@ with st.sidebar:
     menu_icon="cast", default_index=0, orientation="vertical")
 
 # PATHS
-DATA_MAIN_PATH = "/home/tahir/Documents/DataScience/DeepAnalysis/Dataset/"
+DATA_MAIN_PATH = "/home/tahir/Documents/DataScience/KocaeliAirQuality/Dataset/"
 STATION_NAME = station_name_option
-EXTANTION = '.xlsx'
+EXTANTION = '.csv'
 
-data = pd.read_excel(DATA_MAIN_PATH + STATION_NAME + EXTANTION)
-PRPC.delete_unnecessary_rows(data)
-PRPC.change_data_type(data)
+data = pd.read_csv(DATA_MAIN_PATH + STATION_NAME + EXTANTION)
+data.Date = pd.to_datetime(data['Date'])
 PRPC.change_dataset_index(data)
 
-parameters = data.columns[1:]
 
+# '''
+# PRPC.delete_unnecessary_rows(data)
+# PRPC.change_data_type(data)
+# data.index = data['Date']
+# data.drop(data.columns[0], axis=1, inplace=True)
+# data.to_csv('/home/tahir/Documents/DataScience/KocaeliAirQuality/Dataset/'+STATION_NAME+'.csv')
+# '''
+
+parameters = data.columns[1:]
 
 if selected_page == "Home":
     st.title(STATION_NAME)
     st.markdown("#")
     # MAP View of specific station coordinates
     if station_name_option == "Kocaeli - Alikahya-MTHM":
-        VTC.map_visualization(st, pdk, 40.78143, 30.00410) # GEBZE MTHM -lat - long
+        VTC.map_visualization(st, pdk, 40.78143, 30.00410)
     elif station_name_option == "Kocaeli - Dilovası-İMES OSB 1-MTHM":
         VTC.map_visualization(st, pdk, 40.83845, 29.57914)
     elif station_name_option == "Kocaeli - Dilovası-İMES OSB 2-MTHM":
@@ -137,7 +144,7 @@ else :
     forecast_option = st.selectbox("Select Forecast Algorithm", ("LSTM", "ARIMA", "PROPHET"))
     for param in parameters:
         if forecast_option == "LSTM":
-            FAC.lstm_forecast(st, data, param)
+            FAC.lstm_forecast(st, data, param, STATION_NAME)
         elif forecast_option == "ARIMA":
             FAC.arima_forecast(st, data, param)
         else:

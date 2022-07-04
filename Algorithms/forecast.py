@@ -2,6 +2,7 @@ import math
 from matplotlib.figure import Figure
 import numpy as np
 import pandas as pd
+import tensorflow 
 import plotly.express as px
 from prophet import Prophet
 import statsmodels.api as smapi
@@ -9,15 +10,16 @@ from plotly import graph_objs as go
 from prophet.plot import plot_plotly
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, LSTM
+from tensorflow.python.keras.layers import Dense, LSTM, Dropout
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score
 
 
 class ForecastingAlgorithmsClass:
 
-    def lstm_forecast(st, data, forecast_parameter):
+    def lstm_forecast(st, data, forecast_parameter, station_name):
         data = data.filter([forecast_parameter])
+        # data = data.resample('D').mean()
         dataset = data.values
         training_data_len = math.ceil(len(dataset) * 0.8)
         scaler = MinMaxScaler(feature_range=(0, 1))
@@ -26,7 +28,7 @@ class ForecastingAlgorithmsClass:
 
         x_train = []
         y_train = []
-        step = 30
+        step = 100
 
         for i in range(step, len(train_data)):
             x_train.append(train_data[i-step:i, 0])
@@ -40,8 +42,19 @@ class ForecastingAlgorithmsClass:
         model.add(LSTM(50, return_sequences=False))
         model.add(Dense(25))
         model.add(Dense(1))
-        model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
-        history = model.fit(x_train, y_train, batch_size=128, epochs=1)
+        model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error',tensorflow.keras.metrics.Accuracy()])
+        history = model.fit(x_train, y_train, batch_size=128, epochs=3)
+
+        # model.save('/home/tahir/Documents/DataScience/KocaeliAirQuality/Models/'+station_name[0:4]+forecast_parameter+'.h5')
+
+        hist = pd.DataFrame(history.history)
+        hist['epoch'] = history.epoch
+
+        fig1 = go.Figure()
+        fig1.add_trace(go.Scatter(x=hist['epoch'], y=hist['mean_absolute_error'], name='mean_absolute_error'))
+        fig1.add_trace(go.Scatter(x=hist['epoch'], y=hist['loss'], name='loss'))
+        fig1.add_trace(go.Scatter(x=hist['epoch'], y=hist['accuracy'], name='accuracy'))
+        
 
         test_data = scaled_data[training_data_len - step : , :]
         x_test = []
@@ -56,8 +69,8 @@ class ForecastingAlgorithmsClass:
         predictions = model.predict(x_test)
         predictions = scaler.inverse_transform(predictions)
 
-        rms = np.sqrt(np.mean((predictions - y_test))**2)
-        train = data[:training_data_len]
+        # rms = np.sqrt(np.mean((predictions - y_test))**2)
+        # train = data[:training_data_len]
         valid = data[training_data_len:]
         valid['Predictions'] = predictions
       
@@ -66,7 +79,13 @@ class ForecastingAlgorithmsClass:
         fig2.add_trace(go.Line(x=valid.index, y=valid[forecast_parameter], name="validation"))
         fig2.add_trace(go.Line(x=valid.index, y=valid['Predictions'], name="predictions"))
         fig2.layout.update(xaxis_title="Date", yaxis_title=forecast_parameter+" values",title_text=forecast_parameter, xaxis_rangeslider_visible=False, width=800, height=500)
-        st.plotly_chart(fig2)
+        
+        col1, col2 = st.columns(2)
+        with col2:
+            st.plotly_chart(fig1)
+        with col1:
+            st.plotly_chart(fig2)
+
         
         
 
